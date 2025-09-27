@@ -36,3 +36,9 @@ label{
     font-weight: bold;
     color: #000000;
 }
+#characterResult{
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    margin-top: 20px;
+}
