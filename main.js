@@ -36,7 +36,7 @@ async function characterSearch() {
       }
     }
 
-let image = data.profile_image;
+let image = char.profile_image;
 
 if (Array.isArray(char.images) && char.images.length > 0) { 
   if (typeof char.images[0] === 'string') {
