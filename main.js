@@ -1,74 +1,36 @@
 async function characterSearch() {
-  const searchInputRaw = document.getElementById('searchInput').value.trim();
+  const termo = document.getElementById('searchInput').value.trim().toLowerCase();
   const resultDiv = document.getElementById('characterResult');
-
-  if (!searchInputRaw) {
-    resultDiv.innerHTML = '<p>Por favor, digite um nome ou ID de personagem.</p>';
-    return;
-  }
-
+  if (!termo) return resultDiv.innerHTML = '<p>Por favor, digite um sobrenome, nome ou ID de personagem.</p>';
   resultDiv.innerHTML = '<p>Carregando...</p>';
 
-  const isId = /^[0-9]+$/.test(searchInputRaw);
-  const base = 'https://naruto-br-api.site/characters';
-  let url;
-
-  if (isId) {
-    url = `${base}/${encodeURIComponent(searchInputRaw)}`;
-  } else {
-    url = base; 
-  }
-
   try {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Erro ${response.status}: Personagem não encontrado.`);
-
-    const data = await response.json();
-    let char;
-
-    if (isId) {
-      char = data;
+    let chars = [];
+    if (/^[0-9]+$/.test(termo)) {
+      const res = await fetch(`https://naruto-br-api.site/characters/${termo}`);
+      if (!res.ok) throw new Error('Personagem não encontrado.');
+      chars = [await res.json()];
     } else {
-      char = data.find(c => c.name.toLowerCase().includes(searchInputRaw.toLowerCase()));
-      if (!char) {
-        resultDiv.innerHTML = '<p>Personagem não encontrado.</p>';
-        return;
-      }
+      const res = await fetch('https://naruto-br-api.site/characters');
+      if (!res.ok) throw new Error('Personagem não encontrado.');
+      const data = await res.json();
+      chars = data.filter(c => c.name.toLowerCase().includes(termo));
     }
+    if (!chars.length) return resultDiv.innerHTML = '<p>Nenhum personagem encontrado.</p>';
 
-let image = char.profile_image;
-
-if (Array.isArray(char.images) && char.images.length > 0) { 
-  if (typeof char.images[0] === 'string') {
-    image = char.images[0];
-  } else if (char.images[0].url) {
-    image = char.images[0].url;
-  }
-}
-
-    const father = char.father?.name || 'Desconhecido';
-    const mother = char.mother?.name || 'Desconhecida';
-    const village = char.village?.name || '---';
-    const rank = char.rank || '---';
-    const power = char.power || '---';
-    const summary = char.summary || '---';
-    
-
-    resultDiv.innerHTML = `
-      <h2>${char.name}</h2>
-      <img src="${image}" alt="${char.name}" width="200">
-      <p><strong>Pai:</strong> ${father}</p>
-      <p><strong>Mãe:</strong> ${mother}</p>
-      <p><strong>Vila:</strong> ${village}</p>
-      <p><strong>Rank:</strong> ${rank}</p>
-      <p><strong>Poder:</strong> ${power}</p>
-      <p><strong>Resumo:</strong> ${summary}</p>
-
-    `;
+    resultDiv.innerHTML = chars.map(char => `
+      <div style="margin-bottom:32px;padding-bottom:16px;border-bottom:1px solid #eee;">
+        <h2>${char.name}</h2>
+        <img src="${char.profile_image || (char.images?.[0]?.url || char.images?.[0] || '')}" alt="${char.name}" width="340" style="max-width:98%;border-radius:16px;box-shadow:0 4px 18px rgba(252,74,26,0.13);margin-bottom:14px;">
+        <p><strong>Pai:</strong> ${char.father?.name || 'Desconhecido'}</p>
+        <p><strong>Mãe:</strong> ${char.mother?.name || 'Desconhecida'}</p>
+        <p><strong>Vila:</strong> ${char.village?.name || '---'}</p>
+        <p><strong>Rank:</strong> ${char.rank || '---'}</p>
+        <p><strong>Poder:</strong> ${char.power || '---'}</p>
+        <p><strong>Resumo:</strong> ${char.summary || '---'}</p>
+      </div>
+    `).join('');
   } catch (err) {
-    console.error('ERRO BUSCA ->', err);
     resultDiv.innerHTML = `<p>Erro ao buscar personagem: ${err.message}</p>`;
   }
 }
-
-document.getElementById('searchButton').addEvent
